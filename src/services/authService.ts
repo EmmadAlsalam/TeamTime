@@ -16,6 +16,7 @@ import {
   doc, 
   setDoc,
   getDoc,
+  updateDoc,
   serverTimestamp
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -43,16 +44,6 @@ export interface UserProfile {
   department?: string;
   createdAt: any;
 }
-
-export const DEPARTMENTS = [
-  'Mottagning',
-  'Inlagring',
-  'Plock',
-  'Pack',
-  'Utlastning',
-  'Returer',
-  'Inventering'
-];
 
 export const authService = {
   async loginWithPin(pin: string): Promise<UserProfile> {
@@ -171,40 +162,57 @@ export const authService = {
   },
 
   async updateUserPin(userId: string, currentPin: string, newPin: string): Promise<void> {
-    if (currentPin === newPin) return;
+    return this.updateUserFull(userId, currentPin, { pin: newPin });
+  },
 
-    // 1. Check if new PIN is already taken
-    const q = query(collection(db, 'users'), where('pin', '==', newPin));
-    const snapshot = await getDocs(q);
-    if (!snapshot.empty) {
-      throw new Error('Den nya pinkoden används redan.');
+  async updateUserFull(
+    userId: string,
+    currentPin: string,
+    updates: {
+      name?: string;
+      role?: 'admin' | 'employee';
+      department?: string;
+      pin?: string;
+      status?: 'active' | 'inactive';
+    }
+  ): Promise<void> {
+    const firestoreUpdates: Record<string, any> = {};
+    if (updates.name !== undefined) firestoreUpdates.name = updates.name.trim();
+    if (updates.role !== undefined) firestoreUpdates.role = updates.role;
+    if (updates.department !== undefined) firestoreUpdates.department = updates.department;
+    if (updates.status !== undefined) firestoreUpdates.status = updates.status;
+
+    // If PIN is changing
+    if (updates.pin && updates.pin !== currentPin) {
+      if (updates.pin.length !== 4 || !/^\d+$/.test(updates.pin)) {
+        throw new Error('Pinkoden måste bestå av exakt 4 siffror.');
+      }
+
+      // Check if new PIN is already taken by another user
+      const q = query(collection(db, 'users'), where('pin', '==', updates.pin));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty && snapshot.docs.some(d => d.id !== userId)) {
+        throw new Error('Den nya pinkoden används redan av en annan användare.');
+      }
+
+      const oldEmail = `pin_${currentPin}@${VIRTUAL_DOMAIN}`;
+      const newEmail = `pin_${updates.pin}@${VIRTUAL_DOMAIN}`;
+      const secondaryAuth = getSecondaryAuth();
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(secondaryAuth, oldEmail, VIRTUAL_PASSWORD);
+        await updateEmail(userCredential.user, newEmail);
+        firestoreUpdates.pin = updates.pin;
+      } catch (authErr: any) {
+        console.warn('Update Auth email error (updating Firestore directly):', authErr);
+        firestoreUpdates.pin = updates.pin;
+      } finally {
+        try { await signOut(secondaryAuth); } catch (e) {}
+      }
     }
 
-    const oldEmail = `pin_${currentPin}@${VIRTUAL_DOMAIN}`;
-    const newEmail = `pin_${newPin}@${VIRTUAL_DOMAIN}`;
-    const secondaryAuth = getSecondaryAuth();
-
-    try {
-      // 2. Sign in as the user in secondary auth
-      const userCredential = await signInWithEmailAndPassword(secondaryAuth, oldEmail, VIRTUAL_PASSWORD);
-      
-      // 3. Update their email
-      await updateEmail(userCredential.user, newEmail);
-
-      // 4. Update Firestore doc
-      await setDoc(doc(db, 'users', userId), { pin: newPin }, { merge: true });
-
-      // 5. Cleanup
-      await signOut(secondaryAuth);
-    } catch (error: any) {
-      console.error('Update PIN error:', error);
-      // Ensure cleanup even on error
-      try { await signOut(secondaryAuth); } catch (e) {}
-      
-      if (error.code === 'auth/requires-recent-login') {
-        throw new Error('Säkerhetsfel: Handlingen kräver en nyligen genomförd inloggning. Prova igen.');
-      }
-      throw new Error('Kunde inte uppdatera pinkoden: ' + (error.message || 'Okänt fel'));
+    if (Object.keys(firestoreUpdates).length > 0) {
+      await updateDoc(doc(db, 'users', userId), firestoreUpdates);
     }
   },
 

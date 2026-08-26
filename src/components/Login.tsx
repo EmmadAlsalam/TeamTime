@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Lock, Delete, ArrowRight, Loader2, UserPlus, X } from 'lucide-react';
+import { Lock, Delete, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { authService } from '../services/authService';
 import { ThemeToggle } from './ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
 
@@ -10,11 +9,6 @@ export const Login: React.FC = () => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [regName, setRegName] = useState('');
-  const [regPin, setRegPin] = useState('');
-  const [regLoading, setRegLoading] = useState(false);
-  const [regError, setRegError] = useState('');
   const { login } = useAuth();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -58,7 +52,6 @@ export const Login: React.FC = () => {
   // Physical keyboard support for rapid entry
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (showRegisterModal) return;
       if (/^[0-9]$/.test(e.key)) {
         e.preventDefault();
         handleKeyPress(e.key);
@@ -69,27 +62,7 @@ export const Login: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyPress, handleDelete, showRegisterModal]);
-
-  const handleRegisterAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (regPin.length !== 4 || !/^\d{4}$/.test(regPin)) {
-      setRegError('Pinkoden måste bestå av exakt 4 siffror.');
-      return;
-    }
-    setRegLoading(true);
-    setRegError('');
-    try {
-      await authService.createUser(regName, regPin, 'admin');
-      setShowRegisterModal(false);
-      // Auto-login with the newly created PIN
-      await login(regPin);
-    } catch (err: any) {
-      setRegError(err.message || 'Kunde inte skapa administratör.');
-    } finally {
-      setRegLoading(false);
-    }
-  };
+  }, [handleKeyPress, handleDelete]);
 
   return (
     <div className={`min-h-screen flex items-center justify-center p-4 font-sans relative transition-colors duration-200 ${
@@ -213,7 +186,7 @@ export const Login: React.FC = () => {
           )}
         </AnimatePresence>
 
-        {/* Auto login status or button indicator */}
+        {/* Auto login status */}
         <div className="text-center">
           <p className={`text-[11px] font-medium tracking-wide ${
             isDark ? 'text-white/40' : 'text-zinc-400'
@@ -221,112 +194,9 @@ export const Login: React.FC = () => {
             Inloggning sker automatiskt när 4 siffror angivits
           </p>
         </div>
-
-        <div className="mt-6 pt-4 border-t border-dashed border-zinc-500/20 text-center">
-          <button
-            onClick={() => {
-              setRegError('');
-              setShowRegisterModal(true);
-            }}
-            className={`text-xs transition-colors flex items-center justify-center gap-2 mx-auto font-medium ${
-              isDark ? 'text-white/60 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'
-            }`}
-          >
-            <UserPlus className="w-3.5 h-3.5" /> Skapa / Registrera ny administratör
-          </button>
-        </div>
       </motion.div>
-
-      {/* Admin Registration Modal */}
-      <AnimatePresence>
-        {showRegisterModal && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className={`border rounded-[32px] p-8 max-w-md w-full relative ${
-                isDark
-                  ? 'bg-[#141418] border-white/10 text-white'
-                  : 'bg-white border-zinc-200 text-zinc-900 shadow-2xl'
-              }`}
-            >
-              <button
-                onClick={() => setShowRegisterModal(false)}
-                className={`absolute top-6 right-6 transition-colors ${
-                  isDark ? 'text-white/40 hover:text-white' : 'text-zinc-400 hover:text-zinc-900'
-                }`}
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <h3 className="text-xl font-bold font-serif italic mb-2">Registrera Administratör</h3>
-              <p className={`text-xs mb-6 ${isDark ? 'text-white/50' : 'text-zinc-500'}`}>
-                Skapa ett nytt administratörskonto med valfri 4-siffrig PIN-kod.
-              </p>
-
-              <form onSubmit={handleRegisterAdmin} className="space-y-4">
-                <div>
-                  <label className={`text-[10px] font-bold uppercase tracking-wider ${
-                    isDark ? 'text-white/40' : 'text-zinc-500'
-                  }`}>
-                    Namn
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    placeholder="T.ex. Admin"
-                    value={regName}
-                    onChange={e => setRegName(e.target.value)}
-                    className={`w-full border rounded-xl p-3.5 text-sm outline-none transition-colors mt-1 ${
-                      isDark
-                        ? 'bg-white/5 border-white/10 text-white focus:border-white/30'
-                        : 'bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-zinc-400'
-                    }`}
-                  />
-                </div>
-                <div>
-                  <label className={`text-[10px] font-bold uppercase tracking-wider ${
-                    isDark ? 'text-white/40' : 'text-zinc-500'
-                  }`}>
-                    4-siffrig PIN
-                  </label>
-                  <input
-                    required
-                    maxLength={4}
-                    pattern="\d{4}"
-                    placeholder="1234"
-                    value={regPin}
-                    onChange={e => setRegPin(e.target.value)}
-                    className={`w-full border rounded-xl p-3.5 text-sm outline-none transition-colors tracking-[0.5em] text-center font-bold mt-1 ${
-                      isDark
-                        ? 'bg-white/5 border-white/10 text-white focus:border-white/30'
-                        : 'bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-zinc-400'
-                    }`}
-                  />
-                </div>
-
-                {regError && (
-                  <p className="text-red-400 text-xs mt-2">{regError}</p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={regLoading}
-                  className={`w-full py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 mt-4 ${
-                    isDark
-                      ? 'bg-white text-[#141418] hover:bg-white/90'
-                      : 'bg-zinc-900 text-white hover:bg-zinc-800'
-                  }`}
-                >
-                  {regLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Skapa & Logga In'}
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
+
 

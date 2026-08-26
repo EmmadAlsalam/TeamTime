@@ -14,6 +14,7 @@ import {
   deleteDoc
 } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
+import type { UserProfile } from './authService';
 
 enum OperationType {
   CREATE = 'create',
@@ -55,11 +56,31 @@ export interface Task {
   title: string;
   description: string;
   status: 'pending' | 'in-progress' | 'completed';
+  department?: string;
   assignedTo: string[];
   createdBy: string;
   createdAt: Timestamp;
   completedAt?: Timestamp;
 }
+
+export interface DepartmentItem {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt?: Timestamp;
+}
+
+export const DEFAULT_DEPARTMENTS: string[] = [
+  'Mottagning',
+  'Inlagring',
+  'Plock',
+  'Pack',
+  'Utlastning',
+  'Returer',
+  'Inventering',
+  'Ledning',
+  'Övrigt'
+];
 
 export interface TimeLog {
   id: string;
@@ -311,11 +332,122 @@ export const dbService = {
     return await updateDoc(doc(db, 'users', userId), { status });
   },
 
+  async updateUserDepartment(userId: string, department: string) {
+    return await updateDoc(doc(db, 'users', userId), { department });
+  },
+
+  async updateUser(userId: string, data: Partial<UserProfile>) {
+    return await updateDoc(doc(db, 'users', userId), data);
+  },
+
   async deleteUser(userId: string) {
     try {
       return await deleteDoc(doc(db, 'users', userId));
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `users/${userId}`);
+    }
+  },
+
+  // Department Management (Admin)
+  subscribeToDepartments(callback: (departments: DepartmentItem[]) => void) {
+    const q = query(collection(db, 'departments'), orderBy('name', 'asc'));
+    return onSnapshot(q, async (snapshot) => {
+      if (snapshot.empty) {
+        // Seed default departments if collection is completely fresh
+        try {
+          for (const deptName of DEFAULT_DEPARTMENTS) {
+            await addDoc(collection(db, 'departments'), {
+              name: deptName,
+              description: `Avdelning för ${deptName.toLowerCase()}`,
+              createdAt: serverTimestamp()
+            });
+          }
+        } catch (e) {
+          console.warn('Initial department seeding error (non-fatal):', e);
+        }
+        return;
+      }
+      const departments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DepartmentItem));
+      callback(departments);
+    }, (error) => {
+      console.error("Departments snapshot error:", error);
+    });
+  },
+
+  async createDepartment(name: string, description: string = '') {
+    const trimmed = name.trim();
+    if (!trimmed) throw new Error('Avdelningsnamn får inte vara tomt');
+
+    // Check duplicate
+    const q = query(collection(db, 'departments'), where('name', '==', trimmed));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      throw new Error(`En avdelning med namnet "${trimmed}" finns redan.`);
+    }
+
+    return await addDoc(collection(db, 'departments'), {
+      name: trimmed,
+      description: description.trim(),
+      createdAt: serverTimestamp()
+    });
+  },
+
+  async updateDepartment(id: string, oldName: string, newName: string, description: string = '') {
+    const trimmed = newName.trim();
+    if (!trimmed) throw new Error('Avdelningsnamn får inte vara tomt');
+
+    // Check duplicate if name changed
+    if (trimmed !== oldName) {
+      const q = query(collection(db, 'departments'), where('name', '==', trimmed));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty && snapshot.docs.some(d => d.id !== id)) {
+        throw new Error(`En avdelning med namnet "${trimmed}" finns redan.`);
+      }
+    }
+
+    await updateDoc(doc(db, 'departments', id), {
+      name: trimmed,
+      description: description.trim()
+    });
+
+    // Cascade update to users & tasks if name changed
+    if (trimmed !== oldName) {
+      try {
+        const usersQ = query(collection(db, 'users'), where('department', '==', oldName));
+        const usersSnap = await getDocs(usersQ);
+        for (const userDoc of usersSnap.docs) {
+          await updateDoc(userDoc.ref, { department: trimmed });
+        }
+
+        const tasksQ = query(collection(db, 'tasks'), where('department', '==', oldName));
+        const tasksSnap = await getDocs(tasksQ);
+        for (const taskDoc of tasksSnap.docs) {
+          await updateDoc(taskDoc.ref, { department: trimmed });
+        }
+      } catch (cascadeErr) {
+        console.warn('Cascade update error for department rename:', cascadeErr);
+      }
+    }
+  },
+
+  async deleteDepartment(id: string, name: string) {
+    await deleteDoc(doc(db, 'departments', id));
+
+    // Clear or update users and tasks attached to this deleted department
+    try {
+      const usersQ = query(collection(db, 'users'), where('department', '==', name));
+      const usersSnap = await getDocs(usersQ);
+      for (const userDoc of usersSnap.docs) {
+        await updateDoc(userDoc.ref, { department: 'Övrigt' });
+      }
+
+      const tasksQ = query(collection(db, 'tasks'), where('department', '==', name));
+      const tasksSnap = await getDocs(tasksQ);
+      for (const taskDoc of tasksSnap.docs) {
+        await updateDoc(taskDoc.ref, { department: 'Övrigt' });
+      }
+    } catch (e) {
+      console.warn('Cascade department deletion cleanup error:', e);
     }
   }
 };

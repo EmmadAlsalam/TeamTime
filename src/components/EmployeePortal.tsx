@@ -28,6 +28,16 @@ const RECEPTION_DEFAULT_TASKS = [
   { id: 'rec_5', title: 'Städning Mottagning', description: 'Håll rent och snyggt vid mottagningskajen.' }
 ];
 
+const PICKING_DEFAULT_TASKS = [
+  { id: 'pick_z1', title: 'Plock Zon 1', description: 'Plocka orderrader och artiklar inom Zon 1.' },
+  { id: 'pick_z2', title: 'Plock Zon 2', description: 'Plocka orderrader och artiklar inom Zon 2.' },
+  { id: 'pick_z3', title: 'Plock Zon 3', description: 'Plocka orderrader och artiklar inom Zon 3.' },
+  { id: 'pick_z4', title: 'Plock Zon 4', description: 'Plocka orderrader och artiklar inom Zon 4.' },
+  { id: 'pick_z5', title: 'Plock Zon 5', description: 'Plocka orderrader och artiklar inom Zon 5.' },
+  { id: 'pick_z6', title: 'Plock Zon 6', description: 'Plocka orderrader och artiklar inom Zon 6.' },
+  { id: 'pick_z7', title: 'Plock Zon 7', description: 'Plocka orderrader och artiklar inom Zon 7.' }
+];
+
 export const EmployeePortal: React.FC = () => {
   const { user, logout } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -96,7 +106,11 @@ export const EmployeePortal: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     const unsubTasks = dbService.subscribeToTasks((allTasks) => {
-      setTasks(allTasks.filter(t => t.assignedTo.includes(user.id)));
+      setTasks(allTasks.filter(t => 
+        t.assignedTo.includes(user.id) || 
+        (t.department && user.department && t.department === user.department) ||
+        (t.assignedTo.length === 0 && (!t.department || t.department === user.department))
+      ));
     });
     const unsubMessages = dbService.subscribeToMyMessages(user.id, setMessages);
     const unsubLogs = dbService.subscribeToUserLogs(user.id, setUserLogs);
@@ -238,7 +252,13 @@ export const EmployeePortal: React.FC = () => {
 
   const unreadCount = messages.filter(m => !m.read).length;
 
-  const displayTasks = tasks.length > 0 ? tasks : (user?.department === 'Mottagning' ? RECEPTION_DEFAULT_TASKS : []);
+  const displayTasks = tasks.length > 0 
+    ? tasks 
+    : (user?.department === 'Mottagning' 
+        ? RECEPTION_DEFAULT_TASKS 
+        : (user?.department === 'Plock' 
+            ? PICKING_DEFAULT_TASKS 
+            : []));
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#0c0d0e] pb-20 transition-colors">

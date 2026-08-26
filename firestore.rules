@@ -41,6 +41,12 @@ service cloud.firestore {
       allow delete: if isAdmin() && userId != request.auth.uid;
     }
 
+    // Departments
+    match /departments/{deptId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
     // Tasks
     match /tasks/{taskId} {
       allow read: if isSignedIn();
