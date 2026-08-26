@@ -73,15 +73,16 @@ export const authService = {
       
       return profile;
     } catch (error: any) {
-      console.error('Login error details:', {
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        console.warn(`Unregistered or invalid PIN attempt for ${email}`);
+        throw new Error('Pinkoden är inte registrerad eller felaktig. Kontrollera koden eller skapa ett konto.');
+      }
+
+      console.error('Login system error:', {
         errorCode: error.code,
         errorMessage: error.message,
         email
       });
-      
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        throw new Error('Felaktig pinkod. Försök igen.');
-      }
       
       if (error.code === 'auth/operation-not-allowed') {
         throw new Error('Systemfel: Inloggningsmetoden "E-post/lösenord" är inte aktiverad i Firebase Console.');

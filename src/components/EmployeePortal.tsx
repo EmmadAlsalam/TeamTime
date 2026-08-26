@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { dbService, Task, TimeLog, Message } from '../services/dbService';
 import { motion, AnimatePresence } from 'motion/react';
+import { ThemeToggle } from './ThemeToggle';
 
 const RECEPTION_DEFAULT_TASKS = [
   { id: 'rec_1', title: 'Ankomstkontroll', description: 'Kontrollera inkommande paket mot följesedel.' },
@@ -240,37 +241,38 @@ export const EmployeePortal: React.FC = () => {
   const displayTasks = tasks.length > 0 ? tasks : (user?.department === 'Mottagning' ? RECEPTION_DEFAULT_TASKS : []);
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] pb-20">
+    <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#0c0d0e] pb-20 transition-colors">
       {/* Header */}
-      <header className="bg-white border-b border-[#e5e5e5] px-6 py-4 sticky top-0 z-10 shadow-sm">
+      <header className="bg-white dark:bg-[#141517] border-b border-[#e5e5e5] dark:border-stone-800 px-6 py-4 sticky top-0 z-10 shadow-sm transition-colors">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#141414] rounded-xl flex items-center justify-center text-white font-bold">
+            <div className="w-10 h-10 bg-[#141414] dark:bg-stone-800 border dark:border-stone-700 rounded-xl flex items-center justify-center text-white font-bold">
               {user?.name[0]}
             </div>
             <div>
-              <h2 className="font-bold text-[#141414] leading-none mb-1">{user?.name}</h2>
-              <p className="text-[10px] text-[#9e9e9e] uppercase tracking-wider font-semibold">
+              <h2 className="font-bold text-[#141414] dark:text-stone-100 leading-none mb-1">{user?.name}</h2>
+              <p className="text-[10px] text-[#9e9e9e] dark:text-stone-400 uppercase tracking-wider font-semibold">
                 {user?.department} | Medarbetare
               </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
             <button 
               onClick={() => setShowInbox(true)}
-              className="relative p-2 hover:bg-[#f5f5f5] rounded-full transition-colors"
+              className="relative p-2 hover:bg-[#f5f5f5] dark:hover:bg-stone-800 rounded-full transition-colors"
             >
-              <Inbox className="w-6 h-6 text-[#141414]" />
+              <Inbox className="w-6 h-6 text-[#141414] dark:text-stone-300" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white font-bold">
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white dark:border-[#141517] font-bold">
                   {unreadCount}
                 </span>
               )}
             </button>
             <button 
               onClick={logout}
-              className="p-2 hover:bg-[#f5f5f5] rounded-full text-red-500 transition-colors"
+              className="p-2 hover:bg-[#f5f5f5] dark:hover:bg-stone-800 rounded-full text-red-500 transition-colors"
             >
               <LogOut className="w-6 h-6" />
             </button>
@@ -280,21 +282,21 @@ export const EmployeePortal: React.FC = () => {
 
       <main className="max-w-4xl mx-auto p-6 space-y-8">
         {/* Clock In/Out & Session Info */}
-        <section className="bg-white rounded-[32px] p-8 shadow-sm border border-[#e5e5e5] flex flex-col md:flex-row items-center justify-between gap-8">
+        <section className="bg-white dark:bg-[#141517] rounded-[32px] p-8 shadow-sm border border-[#e5e5e5] dark:border-stone-800 flex flex-col md:flex-row items-center justify-between gap-8 transition-colors">
           <div className="flex items-center gap-6">
-            <div className={`p-5 rounded-3xl transition-colors ${isClockedIn ? (isPaused ? 'bg-orange-50 text-orange-500' : 'bg-green-50 text-green-600') : 'bg-red-50 text-red-500'}`}>
+            <div className={`p-5 rounded-3xl transition-colors ${isClockedIn ? (isPaused ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-500 dark:text-orange-400' : 'bg-green-50 dark:bg-emerald-950/40 text-green-600 dark:text-emerald-400') : 'bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400'}`}>
               {isPaused ? <Coffee className="w-10 h-10" /> : <Clock3 className="w-10 h-10" />}
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-[#141414]">
+              <h3 className="text-2xl font-bold text-[#141414] dark:text-stone-100">
                 {currentTime.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
               </h3>
               <div className="flex items-center gap-3">
-                <p className="text-sm font-bold uppercase tracking-widest text-[#9e9e9e]">
+                <p className="text-sm font-bold uppercase tracking-widest text-[#9e9e9e] dark:text-stone-400">
                   {isClockedIn ? (isPaused ? 'Du har rast' : 'Du arbetar') : 'Du är ej instämplad'}
                 </p>
                 {isClockedIn && (
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-orange-500 bg-orange-50 dark:bg-orange-950/50 dark:text-orange-300 px-2 py-0.5 rounded-full">
                     <Timer className="w-3 h-3" />
                     Rast: {formatTime(totalRestTime + restTimer)}
                   </div>
@@ -307,7 +309,7 @@ export const EmployeePortal: React.FC = () => {
             {!isClockedIn ? (
               <button 
                 onClick={handleClockIn}
-                className="flex-1 md:flex-none px-12 py-4 bg-[#141414] text-white rounded-2xl font-bold shadow-xl hover:bg-[#333] transition-all flex items-center justify-center gap-3"
+                className="flex-1 md:flex-none px-12 py-4 bg-[#141414] hover:bg-[#333] dark:bg-white dark:text-stone-950 dark:hover:bg-stone-200 text-white rounded-2xl font-bold shadow-xl transition-all flex items-center justify-center gap-3"
               >
                 <Play className="w-5 h-5 fill-current" /> Stämpla in
               </button>
@@ -332,8 +334,8 @@ export const EmployeePortal: React.FC = () => {
                   onClick={handleClockOut}
                   className={`flex-1 md:flex-none px-8 py-4 rounded-2xl font-bold shadow-sm transition-all flex items-center justify-center gap-3 border-2 ${
                     reportSubmittedToday 
-                    ? 'border-red-500 text-red-500 hover:bg-red-50' 
-                    : 'border-[#e5e5e5] text-[#9e9e9e] bg-[#f5f5f5] cursor-help'
+                    ? 'border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30' 
+                    : 'border-[#e5e5e5] dark:border-stone-800 text-[#9e9e9e] dark:text-stone-500 bg-[#f5f5f5] dark:bg-stone-800/40 cursor-help'
                   }`}
                   title={!reportSubmittedToday ? 'Skicka dagsrapport först' : 'Stämpla ut'}
                 >
@@ -349,7 +351,7 @@ export const EmployeePortal: React.FC = () => {
           <motion.section 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#141414] text-white rounded-[32px] p-8 shadow-2xl relative overflow-hidden"
+            className="bg-[#141414] dark:bg-stone-900 border border-transparent dark:border-stone-700 text-white rounded-[32px] p-8 shadow-2xl relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
             <div className="relative flex items-center justify-between gap-8">
@@ -376,18 +378,18 @@ export const EmployeePortal: React.FC = () => {
         {/* Tasks Grid */}
         <section className={`${!isClockedIn || isPaused ? 'opacity-50 pointer-events-none grayscale' : ''} transition-all`}>
           <div className="flex items-center justify-between mb-6 pl-2">
-            <h3 className="text-xl font-bold text-[#141414]">
+            <h3 className="text-xl font-bold text-[#141414] dark:text-stone-100">
               {isClockedIn ? (isPaused ? 'Rast pågår...' : 'Välj Uppgift') : 'Stämpla in för att se uppgifter'}
             </h3>
-            <span className="text-xs font-bold text-[#9e9e9e] uppercase tracking-widest bg-[#e5e5e5] px-3 py-1 rounded-full">
+            <span className="text-xs font-bold text-[#9e9e9e] dark:text-stone-400 uppercase tracking-widest bg-[#e5e5e5] dark:bg-stone-800 px-3 py-1 rounded-full">
               {displayTasks.length} tillgängliga
             </span>
           </div>
           
           {displayTasks.length === 0 ? (
-            <div className="bg-white border-2 border-dashed border-[#e5e5e5] rounded-[32px] p-16 text-center">
-              <CheckCircle2 className="w-16 h-16 text-[#d1d1d1] mx-auto mb-4" />
-              <p className="text-[#9e9e9e] font-serif italic text-lg">Inga tilldelade uppgifter just nu.</p>
+            <div className="bg-white dark:bg-[#141517] border-2 border-dashed border-[#e5e5e5] dark:border-stone-800 rounded-[32px] p-16 text-center">
+              <CheckCircle2 className="w-16 h-16 text-[#d1d1d1] dark:text-stone-600 mx-auto mb-4" />
+              <p className="text-[#9e9e9e] dark:text-stone-400 font-serif italic text-lg">Inga tilldelade uppgifter just nu.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -395,17 +397,17 @@ export const EmployeePortal: React.FC = () => {
                 <motion.div 
                   layout
                   key={task.id}
-                  className={`bg-white rounded-[32px] p-8 shadow-sm border-2 transition-all group ${
-                    activeTask?.id === task.id ? 'border-[#141414] shadow-xl' : 'border-transparent hover:border-[#e5e5e5]'
+                  className={`bg-white dark:bg-[#141517] rounded-[32px] p-8 shadow-sm border-2 transition-all group ${
+                    activeTask?.id === task.id ? 'border-[#141414] dark:border-white shadow-xl' : 'border-transparent hover:border-[#e5e5e5] dark:hover:border-stone-700'
                   }`}
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <h4 className="text-xl font-bold text-[#141414]">{task.title}</h4>
-                    <div className={`p-2 rounded-lg transition-colors ${activeTask?.id === task.id ? 'bg-[#141414] text-white' : 'bg-[#f5f5f5] text-[#9e9e9e]'}`}>
+                    <h4 className="text-xl font-bold text-[#141414] dark:text-stone-100">{task.title}</h4>
+                    <div className={`p-2 rounded-lg transition-colors ${activeTask?.id === task.id ? 'bg-[#141414] dark:bg-white text-white dark:text-stone-900' : 'bg-[#f5f5f5] dark:bg-stone-800 text-[#9e9e9e] dark:text-stone-400'}`}>
                       <Play className="w-4 h-4 fill-current" />
                     </div>
                   </div>
-                  <p className="text-sm text-[#9e9e9e] mb-8 leading-relaxed font-medium">{task.description}</p>
+                  <p className="text-sm text-[#9e9e9e] dark:text-stone-400 mb-8 leading-relaxed font-medium">{task.description}</p>
                   
                   {activeTask?.id === task.id ? (
                     <button 
@@ -420,8 +422,8 @@ export const EmployeePortal: React.FC = () => {
                       disabled={!isClockedIn}
                       className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold transition-all shadow-sm ${
                         isClockedIn 
-                        ? 'bg-[#f5f5f5] text-[#141414] hover:bg-[#141414] hover:text-white' 
-                        : 'bg-[#eeeeee] text-[#9e9e9e] cursor-not-allowed'
+                        ? 'bg-[#f5f5f5] dark:bg-stone-800 text-[#141414] dark:text-stone-100 hover:bg-[#141414] hover:text-white dark:hover:bg-white dark:hover:text-stone-900' 
+                        : 'bg-[#eeeeee] dark:bg-stone-800/40 text-[#9e9e9e] dark:text-stone-600 cursor-not-allowed'
                       }`}
                     >
                       <Play className="w-4 h-4 fill-current" /> {isClockedIn ? 'Starta uppgift' : 'Stämpla in först'}
@@ -434,26 +436,26 @@ export const EmployeePortal: React.FC = () => {
         </section>
 
         {/* Daily Mood / Report */}
-        <section id="report-section" className="bg-white rounded-[40px] p-10 shadow-sm border border-[#e5e5e5]">
+        <section id="report-section" className="bg-white dark:bg-[#141517] rounded-[40px] p-10 shadow-sm border border-[#e5e5e5] dark:border-stone-800 transition-colors">
           <div className="max-w-2xl mx-auto">
-            <h3 className="text-2xl font-bold text-[#141414] mb-2 text-center">Hur har dagen varit?</h3>
+            <h3 className="text-2xl font-bold text-[#141414] dark:text-stone-100 mb-2 text-center">Hur har dagen varit?</h3>
             {reportSubmittedToday ? (
-              <div className="bg-green-50 rounded-[32px] p-8 text-center animate-in zoom-in duration-300">
+              <div className="bg-green-50 dark:bg-emerald-950/30 border dark:border-emerald-800/50 rounded-[32px] p-8 text-center animate-in zoom-in duration-300">
                 <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <CheckCircle2 className="w-10 h-10" />
                 </div>
-                <h4 className="text-xl font-bold text-green-700 mb-2">Tack för din feedback!</h4>
-                <p className="text-green-600 text-sm font-medium">Din dagsrapport har tagits emot. Bra jobbat idag!</p>
+                <h4 className="text-xl font-bold text-green-700 dark:text-emerald-300 mb-2">Tack för din feedback!</h4>
+                <p className="text-green-600 dark:text-emerald-400 text-sm font-medium">Din dagsrapport har tagits emot. Bra jobbat idag!</p>
               </div>
             ) : (
               <>
-                <p className="text-[#9e9e9e] text-sm mb-10 text-center font-medium italic">Vi bryr oss om din arbetsdag. Skriv en kort kommentar och välj din känsla.</p>
+                <p className="text-[#9e9e9e] dark:text-stone-400 text-sm mb-10 text-center font-medium italic">Vi bryr oss om din arbetsdag. Skriv en kort kommentar och välj din känsla.</p>
                 
                 <div className="flex gap-6 mb-10">
                   {[
-                    { id: 'good', icon: '😊', label: 'Bra', color: 'hover:bg-green-50 text-green-600', active: 'border-green-500 bg-green-50' },
-                    { id: 'ok', icon: '😐', label: 'Okej', color: 'hover:bg-yellow-50 text-yellow-600', active: 'border-yellow-400 bg-yellow-50' },
-                    { id: 'bad', icon: '😔', label: 'Tuff', color: 'hover:bg-red-50 text-red-600', active: 'border-red-500 bg-red-50' }
+                    { id: 'good', icon: '😊', label: 'Bra', color: 'hover:bg-green-50 dark:hover:bg-green-950/30 text-green-600 dark:text-green-400', active: 'border-green-500 bg-green-50 dark:bg-green-950/40' },
+                    { id: 'ok', icon: '😐', label: 'Okej', color: 'hover:bg-yellow-50 dark:hover:bg-yellow-950/30 text-yellow-600 dark:text-yellow-400', active: 'border-yellow-400 bg-yellow-50 dark:bg-yellow-950/40' },
+                    { id: 'bad', icon: '😔', label: 'Tuff', color: 'hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400', active: 'border-red-500 bg-red-50 dark:bg-red-950/40' }
                   ].map(m => (
                     <button
                       key={m.id}
@@ -461,7 +463,7 @@ export const EmployeePortal: React.FC = () => {
                       className={`flex-1 flex flex-col items-center gap-3 p-6 rounded-[32px] border-4 transition-all ${
                         mood === m.id 
                           ? m.active + ' scale-105 shadow-md' 
-                          : 'border-transparent bg-[#f5f5f5] ' + m.color
+                          : 'border-transparent bg-[#f5f5f5] dark:bg-stone-800 ' + m.color
                       }`}
                     >
                       <span className="text-4xl">{m.icon}</span>
@@ -471,12 +473,12 @@ export const EmployeePortal: React.FC = () => {
                 </div>
 
                 <div className="mb-8">
-                  <label className="text-[10px] font-bold uppercase text-[#9e9e9e] pl-4 tracking-[0.2em]">Kommentar om dagen</label>
+                  <label className="text-[10px] font-bold uppercase text-[#9e9e9e] dark:text-stone-400 pl-4 tracking-[0.2em]">Kommentar om dagen</label>
                   <textarea 
                     value={summary}
                     onChange={e => setSummary(e.target.value)}
                     placeholder="Skriv något om ditt pass eller eventuella hinder..."
-                    className="w-full bg-[#f5f5f5] border-2 border-transparent focus:border-[#141414] rounded-3xl p-6 text-sm font-medium outline-none transition-all min-h-[120px] shadow-inner"
+                    className="w-full bg-[#f5f5f5] dark:bg-stone-800/80 border-2 border-transparent focus:border-[#141414] dark:focus:border-stone-500 text-[#141414] dark:text-stone-100 placeholder:text-stone-400 rounded-3xl p-6 text-sm font-medium outline-none transition-all min-h-[120px] shadow-inner"
                   />
                 </div>
 
@@ -485,8 +487,8 @@ export const EmployeePortal: React.FC = () => {
                   onClick={handleSubmitReport}
                   className={`w-full py-5 rounded-[24px] font-bold transition-all shadow-xl flex items-center justify-center gap-3 ${
                     mood 
-                      ? 'bg-[#141414] text-white hover:bg-[#333] hover:-translate-y-1' 
-                      : 'bg-[#e5e5e5] text-[#9e9e9e] cursor-not-allowed'
+                      ? 'bg-[#141414] text-white hover:bg-[#333] dark:bg-white dark:text-stone-950 dark:hover:bg-stone-200 hover:-translate-y-1' 
+                      : 'bg-[#e5e5e5] dark:bg-stone-800 text-[#9e9e9e] dark:text-stone-600 cursor-not-allowed'
                   }`}
                 >
                   <Send className="w-5 h-5" /> Skicka dagsrapport
@@ -506,48 +508,48 @@ export const EmployeePortal: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowInbox(false)}
-              className="absolute inset-0 bg-[#141414]/40 backdrop-blur-md"
+              className="absolute inset-0 bg-[#141414]/60 backdrop-blur-md"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl p-8 border border-[#e5e5e5] max-h-[85vh] overflow-hidden flex flex-col"
+              className="relative w-full max-w-md bg-white dark:bg-[#141517] rounded-[40px] shadow-2xl p-8 border border-[#e5e5e5] dark:border-stone-800 max-h-[85vh] overflow-hidden flex flex-col transition-colors"
             >
               <div className="flex items-center justify-between mb-8">
-                <h3 className="text-2xl font-bold flex items-center gap-3">
+                <h3 className="text-2xl font-bold flex items-center gap-3 text-[#141414] dark:text-stone-100">
                   <MessageSquare className="w-6 h-6" /> Inkorg
                 </h3>
                 <button 
                   onClick={() => setShowInbox(false)}
-                  className="p-2 hover:bg-[#f5f5f5] rounded-full transition-colors"
+                  className="p-2 hover:bg-[#f5f5f5] dark:hover:bg-stone-800 rounded-full transition-colors text-[#141414] dark:text-stone-200"
                 >
-                  <Square className="w-6 h-6 rotate-45 border-2 border-[#141414] rounded-lg" />
+                  <Square className="w-6 h-6 rotate-45 border-2 border-[#141414] dark:border-stone-400 rounded-lg" />
                 </button>
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
                 {messages.length === 0 ? (
                   <div className="text-center py-16">
-                    <Inbox className="w-16 h-16 text-[#d1d1d1] mx-auto mb-4 opacity-30" />
-                    <p className="text-[#9e9e9e] font-serif italic text-lg">Inga meddelanden ännu.</p>
+                    <Inbox className="w-16 h-16 text-[#d1d1d1] dark:text-stone-600 mx-auto mb-4 opacity-30" />
+                    <p className="text-[#9e9e9e] dark:text-stone-400 font-serif italic text-lg">Inga meddelanden ännu.</p>
                   </div>
                 ) : (
                   messages.map(msg => (
                     <div 
                       key={msg.id}
-                      className={`p-6 rounded-3xl border-2 transition-all ${msg.read ? 'bg-white border-[#f5f5f5]' : 'bg-[#fff] border-[#141414] shadow-md'}`}
+                      className={`p-6 rounded-3xl border-2 transition-all ${msg.read ? 'bg-white dark:bg-stone-900 border-[#f5f5f5] dark:border-stone-800' : 'bg-white dark:bg-stone-900 border-[#141414] dark:border-stone-500 shadow-md'}`}
                     >
-                      <p className="text-sm font-bold text-[#141414] mb-3 leading-relaxed">{msg.content}</p>
-                      <div className="flex items-center justify-between pt-3 border-t border-[#f5f5f5]">
-                        <span className="text-[10px] text-[#9e9e9e] font-bold uppercase tracking-widest flex items-center gap-2">
+                      <p className="text-sm font-bold text-[#141414] dark:text-stone-100 mb-3 leading-relaxed">{msg.content}</p>
+                      <div className="flex items-center justify-between pt-3 border-t border-[#f5f5f5] dark:border-stone-800">
+                        <span className="text-[10px] text-[#9e9e9e] dark:text-stone-400 font-bold uppercase tracking-widest flex items-center gap-2">
                           <Clock className="w-3 h-3" />
                           {msg.timestamp ? msg.timestamp.toDate().toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' }) : '...'}
                         </span>
                         {!msg.read && (
                           <button 
                             onClick={() => dbService.markMessageRead(msg.id)}
-                            className="text-[10px] text-blue-600 font-black uppercase tracking-tighter hover:underline"
+                            className="text-[10px] text-blue-600 dark:text-blue-400 font-black uppercase tracking-tighter hover:underline"
                           >
                             Läst
                           </button>
