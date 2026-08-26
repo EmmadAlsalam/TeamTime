@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with login PIN and role.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "pin": { "type": "string", "description": "4-digit login PIN" },
+        "role": { "type": "string", "enum": ["admin", "employee"] },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "pin", "role", "status", "createdAt"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A task assigned to employees.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "in-progress", "completed"] },
+        "assignedTo": { "type": "array", "items": { "type": "string" }, "description": "List of user IDs" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "status", "createdBy", "createdAt"]
+    },
+    "TimeLog": {
+      "title": "TimeLog",
+      "description": "Tracking when an employee starts or stops a task.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "taskId": { "type": "string" },
+        "type": { "type": "string", "enum": ["start", "end", "switch"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "taskId", "type", "timestamp"]
+    },
+    "DailyReport": {
+      "title": "DailyReport",
+      "description": "End-of-day feedback from employees.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string", "description": "YYYY-MM-DD" },
+        "mood": { "type": "string", "enum": ["good", "bad", "ok"] },
+        "summary": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "mood", "timestamp"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Communication between admin and employee.",
+      "type": "object",
+      "properties": {
+        "fromId": { "type": "string" },
+        "toId": { "type": "string" },
+        "content": { "type": "string" },
+        "read": { "type": "boolean" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fromId", "toId", "content", "read", "timestamp"]
+    },
+    "TaskHistory": {
+      "title": "TaskHistory",
+      "description": "Audit trail for task changes.",
+      "type": "object",
+      "properties": {
+        "taskId": { "type": "string" },
+        "taskTitle": { "type": "string" },
+        "performedBy": { "type": "string" },
+        "type": { "type": "string", "enum": ["created", "updated", "deleted", "status_change", "assignment_change"] },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["taskId", "taskTitle", "performedBy", "type", "details", "timestamp"]
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "User",
+      "description": "Collection of all users (admins and employees)."
+    },
+    "tasks": {
+      "schema": "Task",
+      "description": "Collection of tasks."
+    },
+    "timeLogs": {
+      "schema": "TimeLog",
+      "description": "Logs of user activity."
+    },
+    "dailyReports": {
+      "schema": "DailyReport",
+      "description": "Daily employee feedback."
+    },
+    "messages": {
+      "schema": "Message",
+      "description": "System messages."
+    },
+    "taskHistory": {
+      "schema": "TaskHistory",
+      "description": "Audit trail for task interactions."
+    }
+  }
+}
